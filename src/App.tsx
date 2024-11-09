@@ -4,8 +4,8 @@ import * as turf from "@turf/turf"
 import "mapbox-gl/dist/mapbox-gl.css"
 import "./App.css"
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder"
-import "mapbox-gl/dist/mapbox-gl.css"
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css"
+import { createPulsingDot } from "./Here"
 
 function App() {
   const mapContainer = useRef<HTMLDivElement>(null)
@@ -27,13 +27,6 @@ function App() {
 
     // Generate random points and add routes layer
     map.on("load", async () => {
-      const points = Array.from(
-        { length: 5 },
-        () =>
-          turf.destination(turf.point(centerPoint), 1, Math.random() * 360, { units: "miles" })
-            .geometry.coordinates as [number, number]
-      )
-
       map.addLayer({
         id: "routes",
         type: "line",
@@ -45,11 +38,43 @@ function App() {
         }
       })
 
-      // Add center marker
-      new mapboxgl.Marker({ color: "#FF0000" })
-        .setLngLat(centerPoint)
-        .setPopup(new mapboxgl.Popup().setHTML("Center"))
-        .addTo(map)
+      // Then add the pulsing dot (higher z-index)
+      const pulsingDot = createPulsingDot(map)
+      map.addImage("pulsing-dot", pulsingDot, { pixelRatio: 2 })
+
+      map.addSource("here-dot", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              geometry: {
+                type: "Point",
+                coordinates: centerPoint
+              },
+              properties: {}
+            }
+          ]
+        }
+      })
+
+      map.addLayer({
+        id: "here-dot",
+        type: "symbol",
+        source: "here-dot",
+        layout: {
+          "icon-image": "pulsing-dot",
+          "icon-allow-overlap": true
+        }
+      })
+
+      const points = Array.from(
+        { length: 5 },
+        () =>
+          turf.destination(turf.point(centerPoint), 1, Math.random() * 360, { units: "miles" })
+            .geometry.coordinates as [number, number]
+      )
 
       // Add destination markers, fetch routes
       const routeData = await Promise.all(
@@ -74,7 +99,7 @@ function App() {
             distance: route.distance,
             feature: {
               type: "Feature",
-              properties: { color: "#666" }, // Default gray
+              properties: { color: "#666" },
               geometry: route.geometry
             }
           }
@@ -104,6 +129,7 @@ function App() {
         .extend(points.reduce((b, p) => b.extend(p), new mapboxgl.LngLatBounds()))
       map.fitBounds(bounds, { padding: 50 })
     })
+
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl
