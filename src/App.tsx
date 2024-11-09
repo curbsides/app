@@ -3,6 +3,8 @@ import mapboxgl from "mapbox-gl"
 import * as turf from "@turf/turf"
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder"
 import { createPulsingDot } from "./Here"
+import ReactDOM from "react-dom/client";
+import PopupContent from "./PopupContent";
 import "mapbox-gl/dist/mapbox-gl.css"
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css"
 import "./App.css"
@@ -85,10 +87,17 @@ function App() {
     // Get routes, add markers
     const routeData = await Promise.all(
       points.map(async (point, i) => {
+        const popupNode = document.createElement("div");
+          const root = ReactDOM.createRoot(popupNode);
+          root.render(<PopupContent pointNumber={i} />);
+          const popup = new mapboxgl.Popup({ className: "custom-popup" }).setDOMContent(
+            popupNode
+          );
+      
         currentMarkers.current.push(
           new mapboxgl.Marker({ color: "#666" })
             .setLngLat(point)
-            .setPopup(new mapboxgl.Popup().setHTML(`Point ${i + 1}`))
+            .setPopup(popup)
             .addTo(map)
         )
 

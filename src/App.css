@@ -9,3 +9,26 @@ body {
   margin: 0;
   padding: 0;
 }
+
+.custom-popup .mapboxgl-popup-content {
+  width: 300px; 
+  max-width: 100%;
+  height: auto;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.custom-popup .mapboxgl-popup-content:hover {
+  transform: scale(1.05);
+}
+
+.custom-popup .mapboxgl-popup-close-button {
+  display: none; 
+}
+
+.custom-popup .mapboxgl-popup-tip {
+  display: none;
+}
