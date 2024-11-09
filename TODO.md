@@ -4,6 +4,8 @@
 - ~~Paths to markers~~
 - ~~Animated "here" icon~~
 - ~~Custom marker icons~~
+- ~~Update on search~~
+- Selection indicator/effects
 - React component for nested map
   - Indicate free spot in map
 - "Nearest to me" button
