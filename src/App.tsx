@@ -2,6 +2,9 @@ import { useEffect, useRef } from "react"
 import mapboxgl from "mapbox-gl"
 import "mapbox-gl/dist/mapbox-gl.css"
 import "./App.css"
+import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
+import 'mapbox-gl/dist/mapbox-gl.css';
+import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 
 function App() {
   const mapContainer = useRef<HTMLDivElement>(null)
@@ -22,6 +25,12 @@ function App() {
 
     // Add navigation controls (zoom in/out)
     map.addControl(new mapboxgl.NavigationControl(), "top-left")
+    const geocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      mapboxgl: mapboxgl
+    });
+
+    map.addControl(geocoder, "top-left");
 
     return () => map.remove()
   }, [])
