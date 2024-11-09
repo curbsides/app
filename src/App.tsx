@@ -93,9 +93,11 @@ function App() {
           const popup = new mapboxgl.Popup({ className: "custom-popup" }).setDOMContent(
             popupNode
           );
+          const el = document.createElement("div");
+          el.className = "marker";
       
         currentMarkers.current.push(
-          new mapboxgl.Marker({ color: "#666" })
+          new mapboxgl.Marker(el)
             .setLngLat(point)
             .setPopup(popup)
             .addTo(map)
