@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl"
 import * as turf from "@turf/turf"
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder"
 import { createPulsingDot } from "./Here"
 import ReactDOM from "react-dom/client";
-import PopupContent from "./PopupContent";
+import PopupContent, { PopupNode } from "./PopupContent"; 
 import "mapbox-gl/dist/mapbox-gl.css"
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css"
 import "./App.css"
@@ -30,10 +30,12 @@ function initializeMap(container: HTMLDivElement) {
     center: HERE_TEMP,
     zoom: 16,
     minZoom: 14,
-    maxZoom: 18
+    maxZoom: 18,
+    attributionControl: false,
   })
 
-  // Add routes layer
+  map.addControl(new mapboxgl.AttributionControl({ compact: true }));
+
   map.on("load", () => {
     map.addLayer({
       id: "routes",
@@ -84,15 +86,30 @@ function App() {
           .coordinates as [number, number]
     )
 
+    const createPopup = (index) => {
+      const popupNode = document.createElement("div") as PopupNode; // Cast popupNode to PopupNode
+      const root = ReactDOM.createRoot(popupNode);
+
+      // Render `PopupContent` with popupNode as prop
+      root.render(<PopupContent pointNumber={index} popupNode={popupNode} />);
+
+      const popup = new mapboxgl.Popup({ className: "custom-popup" })
+        .setDOMContent(popupNode)
+        .on("open", () => {
+          // Call loadMap when the popup opens
+          popupNode.loadMap?.();
+        })
+        .on("close", () => {
+          // Call unloadMap when the popup closes
+          popupNode.unloadMap?.();
+        });
+
+      return popup;
+    };
     // Get routes, add markers
     const routeData = await Promise.all(
       points.map(async (point, i) => {
-        const popupNode = document.createElement("div");
-          const root = ReactDOM.createRoot(popupNode);
-          root.render(<PopupContent pointNumber={i} />);
-          const popup = new mapboxgl.Popup({ className: "custom-popup" }).setDOMContent(
-            popupNode
-          );
+          const popup = createPopup(i);
           const el = document.createElement("div");
           el.className = "marker";
       
