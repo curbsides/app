@@ -3,7 +3,7 @@ import mapboxgl from "mapbox-gl"
 const MAPBOX_TOKEN =
   "pk.eyJ1IjoiYWN1bWFuZSIsImEiOiJjbTNhZmxodm8xMGNiMmtvcjNrcTVjYm5vIn0.urWNru_orWfcj6C1HAMQtA"
 const ROUTE_COLOR = "#4169E1",
-  SPOT_COLOR = "rgba(20, 200, 20, 0.25)"
+  SPOT_COLOR = "rgba(20, 200, 20, 0.3)"
 
 export interface PopupNode extends HTMLDivElement {
   loadMap?: () => void
@@ -77,16 +77,14 @@ const Popup: React.FC<PopupProps> = ({ popupNode, coordinates, routeGeometry, st
         },
         paint: {
           "line-color": ROUTE_COLOR,
-          "line-width": 10,
+          "line-width": 14,
           "line-opacity": 0.8
         }
       })
 
       // Add start point marker if provided
       if (startPoint) {
-        new mapboxgl.Marker({ color: ROUTE_COLOR })
-          .setLngLat(startPoint)
-          .addTo(miniMapRef.current)
+        new mapboxgl.Marker({ color: ROUTE_COLOR }).setLngLat(startPoint).addTo(miniMapRef.current)
       }
     })
   }

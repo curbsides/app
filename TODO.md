@@ -7,8 +7,10 @@
 - ~~Update on search~~
 - ~~Selection indicator/effects~~
 - ~~React component for nested map~~
-  - Indicate free spot in map
+  - ~~Indicate free spot in map~~
 - style all components
 - fix flyTo animation
-- remove locate button
-- fix the popup to bottom corner
+- ~~remove locate button~~
+- ~~fix the popup to bottom corner~~
+- Hook up to backend
+- Update models API

@@ -12,7 +12,6 @@ body {
 
 .marker {
   width: 64px; 
-  height: 64px;
   border-radius: 50%;
   cursor: pointer;
   display: block;
@@ -22,31 +21,40 @@ body {
 
 .marker::before {
   content: "";
-  width: 12px; 
-  height: 12px;
+  width: 16px; 
+  height: 16px;
   border-radius: 50%;
-  background-color: black;
+  background-color: #12BA12E6;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%); 
 }
 
-.custom-popup .mapboxgl-popup-content {
-  width: 400px;
-  max-width: 90vw;
-  height: auto;
-  padding: 0;
-  border-radius: 10px;
-  background-color: white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease;
-  overflow: hidden;
-  border: 3px solid white;
+.custom-popup {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  left: auto !important;
+  transform: none !important;
 }
 
-.custom-popup .mapboxgl-popup-content:hover {
-  transform: scale(1.02);
+
+.custom-popup .mapboxgl-popup-content {
+  padding: 0;
+  width: 400px;
+  min-width: 400px;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+  border: 3px solid white;
+  transform: translateX(-42%);
+}
+
+.custom-popup:hover .mapboxgl-popup-content {
+  transform: translateX(-44%) translateY(2%) scale(1.05);
+  box-shadow: 2px 6px 15px rgba(0, 0, 0, 0.35);
 }
 
 .custom-popup .mapboxgl-popup-close-button {
@@ -56,4 +64,3 @@ body {
 .custom-popup .mapboxgl-popup-tip {
   display: none;
 }
-
