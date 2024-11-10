@@ -120,11 +120,19 @@ function App() {
           .coordinates as [number, number]
     )
 
-    const createPopup = (index: number, coords: [number, number]) => {
+    const createPopup = (index: number, coords: [number, number], routeGeometry: GeoJSON.LineString) => {
       const popupNode = document.createElement("div") as PopupNode
       const root = ReactDOM.createRoot(popupNode)
 
-      root.render(<Popup pointNumber={index} popupNode={popupNode} coordinates={coords} />)
+      root.render(
+        <Popup 
+          pointNumber={index} 
+          popupNode={popupNode} 
+          coordinates={coords}
+          routeGeometry={routeGeometry}
+          startPoint={center}
+        />
+      )
 
       const popup = new mapboxgl.Popup({
         className: "custom-popup",
@@ -144,7 +152,8 @@ function App() {
     // Get routes, add markers
     const routeData = await Promise.all(
       points.map(async (point, i) => {
-        const popup = createPopup(i, point)
+        const route = await getRoute(center, point)
+        const popup = createPopup(i, point, route.geometry)
         const el = document.createElement("div")
         el.className = "marker"
 
@@ -156,7 +165,6 @@ function App() {
 
         currentMarkers.current.push(marker)
 
-        const route = await getRoute(center, point)
         return { distance: route.distance, geometry: route.geometry }
       })
     )
