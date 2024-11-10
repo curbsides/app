@@ -8,5 +8,7 @@
 - ~~Selection indicator/effects~~
 - ~~React component for nested map~~
   - Indicate free spot in map
-- "Nearest to me" button
 - style all components
+- fix flyTo animation
+- remove locate button
+- fix the popup to bottom corner

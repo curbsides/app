@@ -14,7 +14,7 @@ interface PopupProps {
   coordinates: [number, number]
 }
 
-const Popup: React.FC<PopupProps> = ({ _, popupNode, coordinates }) => {
+const Popup: React.FC<PopupProps> = ({ popupNode, coordinates }) => {
   const miniMapContainer = useRef<HTMLDivElement>(null)
   const miniMapRef = useRef<mapboxgl.Map | null>(null)
 
@@ -45,6 +45,7 @@ const Popup: React.FC<PopupProps> = ({ _, popupNode, coordinates }) => {
   useEffect(() => {
     popupNode.loadMap = loadMap
     popupNode.unloadMap = unloadMap
+    
 
     return () => {
       unloadMap()
