@@ -18,7 +18,7 @@ interface PopupProps {
   startPoint?: [number, number]
 }
 
-const Popup: React.FC<PopupProps> = ({ _, popupNode, coordinates, routeGeometry, startPoint }) => {
+const Popup: React.FC<PopupProps> = ({ popupNode, coordinates, routeGeometry, startPoint }) => {
   const miniMapContainer = useRef<HTMLDivElement>(null)
   const miniMapRef = useRef<mapboxgl.Map | null>(null)
 
