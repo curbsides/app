@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from "react"
 import mapboxgl from "mapbox-gl"
-import * as turf from "@turf/turf"
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder"
 import { createPulsingDot } from "./Here"
 import ReactDOM from "react-dom/client"
 import Popup, { PopupNode } from "./Popup"
 import "mapbox-gl/dist/mapbox-gl.css"
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css"
+import axios from "axios";
 import "./App.css"
 
 const MAPBOX_TOKEN =
   "pk.eyJ1IjoiYWN1bWFuZSIsImEiOiJjbTNhZmxodm8xMGNiMmtvcjNrcTVjYm5vIn0.urWNru_orWfcj6C1HAMQtA"
-const HERE_TEMP: [number, number] = [-122.4165, 37.7554]
+const BACK_TOKEN = 
+  "https://curbsides-backend-b562ee0057ec.herokuapp.com"
+
+  const HERE_TEMP: [number, number] = [-122.4165, 37.7554]
 const ROUTE_COLOR = "#4169E1"
 const flyToDuration = 2000
 
@@ -67,6 +70,35 @@ function initializeMap(container: HTMLDivElement) {
   return map
 }
 
+async function getImage(imageName) {
+  try {
+    console.log(imageName)
+    const response = await axios.get(`${BACK_TOKEN}/img/${imageName}`, { responseType: 'blob' });
+    const imageUrl = URL.createObjectURL(response.data);
+    return imageUrl;
+  } catch (error) {
+    console.error(`Error fetching image ${imageName}:`, error);
+    return null;
+  }
+}
+
+async function getPoints(center) {
+  try {
+    const response = await axios.get(`${BACK_TOKEN}/loc/?latitude=${center[1]}&longitude=${center[0]}`);
+    const pointsData = response.data.nearest_locations;
+    const points = pointsData
+    .filter(point => point.distance <= 5) 
+    .map(point => ({
+      coordinates: [point.longitude, point.latitude],
+      imageName: `${point.id}.jpg`
+    }));
+    return points; 
+  } catch (error) {
+    console.error("Error fetching points:", error);
+    return [];
+  }
+}
+
 function App() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const currentMarkers = useRef<mapboxgl.Marker[]>([])
@@ -99,6 +131,7 @@ function App() {
     if (!mapRef.current || !routesDataRef.current.length) return
 
     // Close any open popups
+    if (currentMarkers.current.length == 0) return
     currentMarkers.current.forEach(marker => marker.getPopup().remove())
     setSelMarkerIndex(index)
 
@@ -133,13 +166,24 @@ function App() {
       ]
     })
 
-    // Generate random points, add markers
-    const points = Array.from(
-      { length: 5 },
-      () =>
-        turf.destination(turf.point(center), 0.2, Math.random() * 360, { units: "miles" }).geometry
-          .coordinates as [number, number]
-    )
+    let points = await getPoints(center);
+    if (points.length === 0) return;
+    
+    for (const point of points) {
+      const imageUrl = await getImage(point.imageName);
+      if (imageUrl) {
+        const img = document.createElement("img");
+        img.src = imageUrl;
+        img.alt = "Loaded image";
+    
+        img.style.width = "100px"; 
+        img.style.height = "auto";
+    
+        document.body.appendChild(img); 
+        console.log(`Image loaded for ${point.imageName}`);
+      }
+    }
+    points = points.map(point => [point.coordinates[0], point.coordinates[1]]);
 
     const createPopup = (
       index: number,

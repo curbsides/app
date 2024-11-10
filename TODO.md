@@ -9,8 +9,9 @@
 - ~~React component for nested map~~
   - ~~Indicate free spot in map~~
 - style all components
-- fix flyTo animation
+- ~~fix flyTo animation~~
 - ~~remove locate button~~
 - ~~fix the popup to bottom corner~~
-- Hook up to backend
+- ~~Hook up to backend~~
 - Update models API
+- fix white box bug
