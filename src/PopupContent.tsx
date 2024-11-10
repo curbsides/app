@@ -54,14 +54,10 @@ const PopupContent: React.FC<PopupContentProps> = ({ pointNumber, popupNode }) =
   }, []);
 
   return (
-    <div>
-      <h3>Point {pointNumber}</h3>
-      <p>This is a custom React component inside a Mapbox popup.</p>
-      <div
+    <div
         ref={miniMapContainer}
         style={{ width: "200px", height: "200px", marginTop: "10px" }}
       ></div>
-    </div>
   );
 };
 
