@@ -72,7 +72,6 @@ function initializeMap(container: HTMLDivElement) {
 
 async function getImage(imageName) {
   try {
-    console.log(imageName)
     const response = await axios.get(`${BACK_TOKEN}/img/${imageName}`, { responseType: 'blob' });
     const imageUrl = URL.createObjectURL(response.data);
     return imageUrl;
@@ -169,18 +168,22 @@ function App() {
     let points = await getPoints(center);
     if (points.length === 0) return;
     
-    for (const point of points) {
-      const imageUrl = await getImage(point.imageName);
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      const imageUrl = await getImage(point.imageName); 
+    
       if (imageUrl) {
         const img = document.createElement("img");
         img.src = imageUrl;
         img.alt = "Loaded image";
     
-        img.style.width = "100px"; 
+        img.style.width = "100px";
         img.style.height = "auto";
     
-        document.body.appendChild(img); 
-        console.log(`Image loaded for ${point.imageName}`);
+        img.dataset.index = (i).toString();
+    
+        document.body.appendChild(img);
+        console.log(`Image loaded for ${point.imageName} with index ${img.dataset.index}`);
       }
     }
     points = points.map(point => [point.coordinates[0], point.coordinates[1]]);

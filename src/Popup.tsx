@@ -18,7 +18,7 @@ interface PopupProps {
   startPoint?: [number, number]
 }
 
-const Popup: React.FC<PopupProps> = ({ popupNode, coordinates, routeGeometry, startPoint }) => {
+const Popup: React.FC<PopupProps> = ({ pointNumber, popupNode, coordinates, routeGeometry, startPoint }) => {
   const miniMapContainer = useRef<HTMLDivElement>(null)
   const miniMapRef = useRef<mapboxgl.Map | null>(null)
   const initStarted = useRef(false)
@@ -65,6 +65,25 @@ const Popup: React.FC<PopupProps> = ({ popupNode, coordinates, routeGeometry, st
         }
       })
 
+      miniMapRef.current.on("mouseenter", "spot", () => {
+        console.log("hover");
+      
+        // Find the image with the matching data-index for the pointNumber
+        const img = document.querySelector(`img[data-index='${pointNumber}']`)  as HTMLImageElement;;
+      
+        if (img) {
+          img.style.display = "block"; // Show the image
+          console.log(`Image for point ${pointNumber} displayed`);
+        }
+      });
+      
+      miniMapRef.current.on("mouseleave", "spot", () => {
+        const img = document.querySelector(`img[data-index='${pointNumber}']`)  as HTMLImageElement;;
+        
+        if (img) {
+          img.style.display = "none"; // Hide the image
+        }
+      });
       // Add the route layer
       miniMapRef.current.addLayer({
         id: "route",
