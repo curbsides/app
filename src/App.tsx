@@ -13,6 +13,7 @@ const MAPBOX_TOKEN =
   "pk.eyJ1IjoiYWN1bWFuZSIsImEiOiJjbTNhZmxodm8xMGNiMmtvcjNrcTVjYm5vIn0.urWNru_orWfcj6C1HAMQtA"
 const HERE_TEMP: [number, number] = [-122.4165, 37.7554]
 const ROUTE_COLOR = "#4169E1"
+const flyToDuration = 2000;
 
 async function getRoute(start: [number, number], end: [number, number]) {
   const response = await fetch(
@@ -30,7 +31,7 @@ function initializeMap(container: HTMLDivElement) {
     style: "mapbox://styles/mapbox/light-v11",
     center: HERE_TEMP,
     zoom: 16,
-    minZoom: 14,
+    // minZoom: 14,
     maxZoom: 18,
     attributionControl: false
   })
@@ -233,13 +234,35 @@ function App() {
     })
 
     geocoder.on("result", async event => {
-      const newCenter: [number, number] = [event.result.center[0], event.result.center[1]]
-      map.flyTo({ center: newCenter, zoom: 16, essential: true })
-      await updateMapPoints(map, newCenter)
+      await animateFly(event)
     })
 
     map.addControl(geocoder, "top-left")
     map.on("load", () => updateMapPoints(map, HERE_TEMP))
+    let isFlying = false;
+    let startTime = Date.now();
+    map.on('moveend', () => {
+      if (startTime + flyToDuration < Date.now()) {
+        map.setMinZoom(14);
+        map.setMaxZoom(18);
+        mapContainer.current.style.pointerEvents = "auto";
+        isFlying = false
+      }
+    });
+    async function animateFly(event) {
+    
+        if (!isFlying) {
+          isFlying = true;
+          startTime = Date.now();
+          mapContainer.current.style.pointerEvents = "none";
+          const newCenter: [number, number] = [event.result.center[0], event.result.center[1]];
+          map.setMinZoom(null);
+          map.setMaxZoom(null);
+          await updateMapPoints(map, newCenter);
+          map.flyTo({ center: newCenter, zoom: 16, essential: true, duration: flyToDuration });
+         
+        }
+    }
 
     return () => {
       map.remove()
