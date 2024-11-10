@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react"
 import mapboxgl from "mapbox-gl"
 import * as turf from "@turf/turf"
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder"
 import { createPulsingDot } from "./Here"
-import ReactDOM from "react-dom/client";
-import PopupContent, { PopupNode } from "./PopupContent"; 
+import ReactDOM from "react-dom/client"
+import PopupContent, { PopupNode } from "./PopupContent"
 import "mapbox-gl/dist/mapbox-gl.css"
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css"
 import "./App.css"
@@ -12,6 +12,7 @@ import "./App.css"
 const MAPBOX_TOKEN =
   "pk.eyJ1IjoiYWN1bWFuZSIsImEiOiJjbTNhZmxodm8xMGNiMmtvcjNrcTVjYm5vIn0.urWNru_orWfcj6C1HAMQtA"
 const HERE_TEMP: [number, number] = [-122.4165, 37.7554]
+const ROUTE_COLOR = "#4169E1"
 
 async function getRoute(start: [number, number], end: [number, number]) {
   const response = await fetch(
@@ -41,7 +42,11 @@ function initializeMap(container: HTMLDivElement) {
       id: "routes",
       type: "line",
       source: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
-      paint: { "line-color": ["get", "color"], "line-width": 4, "line-opacity": 0.75 }
+      paint: {
+        "line-color": ["get", "color"],
+        "line-width": ["get", "width"],
+        "line-opacity": 0.8
+      }
     })
 
     // Add pulsing dot
@@ -64,6 +69,35 @@ function initializeMap(container: HTMLDivElement) {
 function App() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const currentMarkers = useRef<mapboxgl.Marker[]>([])
+  const mapRef = useRef<mapboxgl.Map | null>(null)
+  const routesDataRef = useRef<Array<{ distance: number; geometry: GeoJSON.LineString }>>([])
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setSelectedMarkerIndex] = useState<number | null>(null)
+
+  function updateSelectedRoute(index: number) {
+    if (!mapRef.current || !routesDataRef.current.length) return
+
+    // Close any open popups
+    currentMarkers.current.forEach(marker => marker.getPopup().remove())
+    setSelectedMarkerIndex(index)
+
+    // Update routes
+    ;(mapRef.current.getSource("routes") as mapboxgl.GeoJSONSource).setData({
+      type: "FeatureCollection",
+      features: routesDataRef.current.map((r, i) => ({
+        type: "Feature",
+        properties: {
+          color: i === index ? ROUTE_COLOR : "#666",
+          width: i === index ? 6 : 3,
+          index: i
+        },
+        geometry: r.geometry
+      }))
+    })
+
+    // Open popup for selected marker
+    currentMarkers.current[index].togglePopup()
+  }
 
   async function updateMapPoints(map: mapboxgl.Map, center: [number, number]) {
     // Clear existing markers
@@ -113,31 +147,27 @@ function App() {
           const el = document.createElement("div");
           el.className = "marker";
       
-        currentMarkers.current.push(
-          new mapboxgl.Marker(el)
-            .setLngLat(point)
-            .setPopup(popup)
-            .addTo(map)
-        )
+        const marker = new mapboxgl.Marker(el).setLngLat(point).setPopup(popup).addTo(map)
+
+        el.addEventListener("click", () => {
+          updateSelectedRoute(i)
+        })
+
+        currentMarkers.current.push(marker)
 
         const route = await getRoute(center, point)
         return { distance: route.distance, geometry: route.geometry }
       })
     )
 
-    // Update routes w/ shortest highlighted
+    routesDataRef.current = routeData
+
+    // Find shortest route
     const shortestIndex = routeData
       .map((r, i) => ({ index: i, distance: r.distance }))
       .sort((a, b) => a.distance - b.distance)[0].index
 
-    ;(map.getSource("routes") as mapboxgl.GeoJSONSource).setData({
-      type: "FeatureCollection",
-      features: routeData.map((r, i) => ({
-        type: "Feature",
-        properties: { color: i === shortestIndex ? "#000" : "#666" },
-        geometry: r.geometry
-      }))
-    })
+    updateSelectedRoute(shortestIndex)
 
     // Fit bounds
     const bounds = points.reduce((b, p) => b.extend(p), new mapboxgl.LngLatBounds().extend(center))
@@ -148,6 +178,7 @@ function App() {
     if (!mapContainer.current) return
 
     const map = initializeMap(mapContainer.current)
+    mapRef.current = map
 
     // Set up geocoder
     const geocoder = new MapboxGeocoder({
@@ -165,7 +196,9 @@ function App() {
     map.addControl(geocoder, "top-left")
     map.on("load", () => updateMapPoints(map, HERE_TEMP))
 
-    return () => map.remove()
+    return () => {
+      map.remove()
+    }
   }, [])
 
   return (

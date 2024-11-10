@@ -1,5 +1,3 @@
-import mapboxgl from "mapbox-gl"
-
 export const createPulsingDot = (map: mapboxgl.Map) => {
   const size = 200
 
@@ -16,26 +14,31 @@ export const createPulsingDot = (map: mapboxgl.Map) => {
     },
 
     render: function () {
-      const duration = 1000
-      const t = (performance.now() % duration) / duration
+      const animationDuration = 2000,
+        pauseDuration = 1000,
+        totalDuration = animationDuration + pauseDuration,
+        currentTime = performance.now() % totalDuration
 
-      const radius = (size / 2) * 0.3
+      // Only animate during animation duration
+      const t = currentTime < animationDuration ? currentTime / animationDuration : 1
+
+      const radius = (size / 2) * 0.2
       const outerRadius = (size / 2) * 0.7 * t + radius
       const context = this.context
 
-      // Draw the outer circle
+      // Outer circle
       context.clearRect(0, 0, this.width, this.height)
       context.beginPath()
       context.arc(this.width / 2, this.height / 2, outerRadius, 0, Math.PI * 2)
-      context.fillStyle = `rgba(255, 200, 200, ${1 - t})`
+      context.fillStyle = `rgba(65, 105, 225, ${1 - t})`
       context.fill()
 
-      // Draw the inner circle
+      // Inner circle
       context.beginPath()
       context.arc(this.width / 2, this.height / 2, radius, 0, Math.PI * 2)
-      context.fillStyle = "rgba(255, 100, 100, 1)"
+      context.fillStyle = "rgba(65, 105, 225, 1)"
       context.strokeStyle = "white"
-      context.lineWidth = 2 + 4 * (1 - t)
+      context.lineWidth = 6
       context.fill()
       context.stroke()
 
