@@ -4,7 +4,7 @@ import * as turf from "@turf/turf"
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder"
 import { createPulsingDot } from "./Here"
 import ReactDOM from "react-dom/client"
-import PopupContent, { PopupNode } from "./PopupContent"
+import Popup, { PopupNode } from "./Popup"
 import "mapbox-gl/dist/mapbox-gl.css"
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css"
 import "./App.css"
@@ -32,10 +32,10 @@ function initializeMap(container: HTMLDivElement) {
     zoom: 16,
     minZoom: 14,
     maxZoom: 18,
-    attributionControl: false,
+    attributionControl: false
   })
 
-  map.addControl(new mapboxgl.AttributionControl({ compact: true }));
+  map.addControl(new mapboxgl.AttributionControl({ compact: true }))
 
   map.on("load", () => {
     map.addLayer({
@@ -116,37 +116,38 @@ function App() {
     const points = Array.from(
       { length: 5 },
       () =>
-        turf.destination(turf.point(center), 1, Math.random() * 360, { units: "miles" }).geometry
+        turf.destination(turf.point(center), 0.2, Math.random() * 360, { units: "miles" }).geometry
           .coordinates as [number, number]
     )
 
-    const createPopup = (index) => {
-      const popupNode = document.createElement("div") as PopupNode; // Cast popupNode to PopupNode
-      const root = ReactDOM.createRoot(popupNode);
+    const createPopup = (index: number, coords: [number, number]) => {
+      const popupNode = document.createElement("div") as PopupNode
+      const root = ReactDOM.createRoot(popupNode)
 
-      // Render `PopupContent` with popupNode as prop
-      root.render(<PopupContent pointNumber={index} popupNode={popupNode} />);
+      root.render(<Popup pointNumber={index} popupNode={popupNode} coordinates={coords} />)
 
-      const popup = new mapboxgl.Popup({ className: "custom-popup" })
+      const popup = new mapboxgl.Popup({
+        className: "custom-popup",
+        offset: [0, -64]
+      })
         .setDOMContent(popupNode)
         .on("open", () => {
-          // Call loadMap when the popup opens
-          popupNode.loadMap?.();
+          popupNode.loadMap?.()
         })
         .on("close", () => {
-          // Call unloadMap when the popup closes
-          popupNode.unloadMap?.();
-        });
+          popupNode.unloadMap?.()
+        })
 
-      return popup;
-    };
+      return popup
+    }
+
     // Get routes, add markers
     const routeData = await Promise.all(
       points.map(async (point, i) => {
-          const popup = createPopup(i);
-          const el = document.createElement("div");
-          el.className = "marker";
-      
+        const popup = createPopup(i, point)
+        const el = document.createElement("div")
+        el.className = "marker"
+
         const marker = new mapboxgl.Marker(el).setLngLat(point).setPopup(popup).addTo(map)
 
         el.addEventListener("click", () => {

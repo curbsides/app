@@ -33,24 +33,27 @@ body {
 }
 
 .custom-popup .mapboxgl-popup-content {
-  width: 300px; 
-  max-width: 100%;
+  width: 400px;
+  max-width: 90vw;
   height: auto;
-  padding: 20px;
+  padding: 0;
   border-radius: 10px;
   background-color: white;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease;
+  overflow: hidden;
+  border: 3px solid white;
 }
 
 .custom-popup .mapboxgl-popup-content:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .custom-popup .mapboxgl-popup-close-button {
-  display: none; 
+  display: none;
 }
 
 .custom-popup .mapboxgl-popup-tip {
   display: none;
 }
+
