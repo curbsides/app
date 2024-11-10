@@ -71,8 +71,28 @@ function App() {
   const currentMarkers = useRef<mapboxgl.Marker[]>([])
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const routesDataRef = useRef<Array<{ distance: number; geometry: GeoJSON.LineString }>>([])
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, setSelectedMarkerIndex] = useState<number | null>(null)
+  const [selectedMarkerIndex, setSelectedMarkerIndex] = useState<number | null>(null)
+
+  function clearSelection() {
+    if (!mapRef.current || !routesDataRef.current.length) return
+
+    // Close any open popups
+    currentMarkers.current.forEach(marker => marker.getPopup().remove())
+    setSelectedMarkerIndex(null)
+
+    // Reset all routes to unselected state
+    ;(mapRef.current.getSource("routes") as mapboxgl.GeoJSONSource).setData({
+      type: "FeatureCollection",
+      features: routesDataRef.current.map(r => ({
+        type: "Feature",
+        properties: {
+          color: "#666",
+          width: 3
+        },
+        geometry: r.geometry
+      }))
+    })
+  }
 
   function updateSelectedRoute(index: number) {
     if (!mapRef.current || !routesDataRef.current.length) return
@@ -120,14 +140,18 @@ function App() {
           .coordinates as [number, number]
     )
 
-    const createPopup = (index: number, coords: [number, number], routeGeometry: GeoJSON.LineString) => {
+    const createPopup = (
+      index: number,
+      coords: [number, number],
+      routeGeometry: GeoJSON.LineString
+    ) => {
       const popupNode = document.createElement("div") as PopupNode
       const root = ReactDOM.createRoot(popupNode)
 
       root.render(
-        <Popup 
-          pointNumber={index} 
-          popupNode={popupNode} 
+        <Popup
+          pointNumber={index}
+          popupNode={popupNode}
           coordinates={coords}
           routeGeometry={routeGeometry}
           startPoint={center}
@@ -144,6 +168,7 @@ function App() {
         })
         .on("close", () => {
           popupNode.unloadMap?.()
+          if (selectedMarkerIndex === index) clearSelection()
         })
 
       return popup
@@ -159,7 +184,8 @@ function App() {
 
         const marker = new mapboxgl.Marker(el).setLngLat(point).setPopup(popup).addTo(map)
 
-        el.addEventListener("click", () => {
+        el.addEventListener("click", e => {
+          e.stopPropagation()
           updateSelectedRoute(i)
         })
 
@@ -189,6 +215,16 @@ function App() {
     const map = initializeMap(mapContainer.current)
     mapRef.current = map
 
+    map.on("click", e => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ["markers"]
+      })
+
+      if (features.length === 0) {
+        clearSelection()
+      }
+    })
+
     // Set up geocoder
     const geocoder = new MapboxGeocoder({
       accessToken: MAPBOX_TOKEN,
@@ -211,7 +247,10 @@ function App() {
   }, [])
 
   return (
-    <div ref={mapContainer} style={{ position: "absolute", top: 0, bottom: 0, width: "100%" }} />
+    <div
+      ref={mapContainer}
+      style={{ position: "absolute", top: 0, bottom: 0, width: "100%" }}
+    />
   )
 }
 
