@@ -6,15 +6,14 @@ import ReactDOM from "react-dom/client"
 import Popup, { PopupNode } from "./Popup"
 import "mapbox-gl/dist/mapbox-gl.css"
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css"
-import axios from "axios";
+import axios from "axios"
 import "./App.css"
 
 const MAPBOX_TOKEN =
   "pk.eyJ1IjoiYWN1bWFuZSIsImEiOiJjbTNhZmxodm8xMGNiMmtvcjNrcTVjYm5vIn0.urWNru_orWfcj6C1HAMQtA"
-const BACK_TOKEN = 
-  "https://curbsides-backend-b562ee0057ec.herokuapp.com"
+const BACK_TOKEN = "https://curbsides-backend-b562ee0057ec.herokuapp.com"
 
-  const HERE_TEMP: [number, number] = [-122.4165, 37.7554]
+const HERE_TEMP: [number, number] = [-122.4165, 37.7554]
 const ROUTE_COLOR = "#4169E1"
 const flyToDuration = 2000
 
@@ -34,7 +33,6 @@ function initializeMap(container: HTMLDivElement) {
     style: "mapbox://styles/mapbox/light-v11",
     center: HERE_TEMP,
     zoom: 16,
-    // minZoom: 14,
     maxZoom: 18,
     attributionControl: false
   })
@@ -53,7 +51,6 @@ function initializeMap(container: HTMLDivElement) {
       }
     })
 
-    // Add pulsing dot
     map.addImage("pulsing-dot", createPulsingDot(map), { pixelRatio: 2 })
     map.addSource("here-dot", {
       type: "geojson",
@@ -72,29 +69,31 @@ function initializeMap(container: HTMLDivElement) {
 
 async function getImage(imageName) {
   try {
-    const response = await axios.get(`${BACK_TOKEN}/img/${imageName}`, { responseType: 'blob' });
-    const imageUrl = URL.createObjectURL(response.data);
-    return imageUrl;
+    const response = await axios.get(`${BACK_TOKEN}/img/${imageName}`, { responseType: "blob" })
+    const imageUrl = URL.createObjectURL(response.data)
+    return imageUrl
   } catch (error) {
-    console.error(`Error fetching image ${imageName}:`, error);
-    return null;
+    console.error(`Error fetching image ${imageName}:`, error)
+    return null
   }
 }
 
 async function getPoints(center) {
   try {
-    const response = await axios.get(`${BACK_TOKEN}/loc/?latitude=${center[1]}&longitude=${center[0]}`);
-    const pointsData = response.data.nearest_locations;
+    const response = await axios.get(
+      `${BACK_TOKEN}/loc/?latitude=${center[1]}&longitude=${center[0]}`
+    )
+    const pointsData = response.data.nearest_locations
     const points = pointsData
-    .filter(point => point.distance <= 5) 
-    .map(point => ({
-      coordinates: [point.longitude, point.latitude],
-      imageName: `${point.id}.jpg`
-    }));
-    return points; 
+      .filter(point => point.distance <= 5)
+      .map(point => ({
+        coordinates: [point.longitude, point.latitude],
+        imageName: `${point.id}.jpg`
+      }))
+    return points
   } catch (error) {
-    console.error("Error fetching points:", error);
-    return [];
+    console.error("Error fetching points:", error)
+    return []
   }
 }
 
@@ -104,15 +103,13 @@ function App() {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const routesDataRef = useRef<Array<{ distance: number; geometry: GeoJSON.LineString }>>([])
   const [selMarkerIndex, setSelMarkerIndex] = useState<number | null>(null)
+  const imageUrlsRef = useRef<string[]>([])
 
   function clearSelection() {
     if (!mapRef.current || !routesDataRef.current.length) return
 
-    // Close any open popups
     currentMarkers.current.forEach(marker => marker.getPopup().remove())
     setSelMarkerIndex(null)
-
-    // Reset all routes to unselected state
     ;(mapRef.current.getSource("routes") as mapboxgl.GeoJSONSource).setData({
       type: "FeatureCollection",
       features: routesDataRef.current.map(r => ({
@@ -129,12 +126,8 @@ function App() {
   function updateSelectedRoute(index: number) {
     if (!mapRef.current || !routesDataRef.current.length) return
 
-    // Close any open popups
-    if (currentMarkers.current.length == 0) return
     currentMarkers.current.forEach(marker => marker.getPopup().remove())
     setSelMarkerIndex(index)
-
-    // Update routes
     ;(mapRef.current.getSource("routes") as mapboxgl.GeoJSONSource).setData({
       type: "FeatureCollection",
       features: routesDataRef.current.map((r, i) => ({
@@ -148,16 +141,13 @@ function App() {
       }))
     })
 
-    // Open popup for selected marker
     currentMarkers.current[index].togglePopup()
   }
 
   async function updateMapPoints(map: mapboxgl.Map, center: [number, number]) {
-    // Clear existing markers
     currentMarkers.current.forEach(marker => marker.remove())
     currentMarkers.current = []
-
-    // Update here-dot
+    imageUrlsRef.current = []
     ;(map.getSource("here-dot") as mapboxgl.GeoJSONSource).setData({
       type: "FeatureCollection",
       features: [
@@ -165,28 +155,15 @@ function App() {
       ]
     })
 
-    let points = await getPoints(center);
-    if (points.length === 0) return;
-    
-    for (let i = 0; i < points.length; i++) {
-      const point = points[i];
-      const imageUrl = await getImage(point.imageName); 
-    
-      if (imageUrl) {
-        const img = document.createElement("img");
-        img.src = imageUrl;
-        img.alt = "Loaded image";
-    
-        img.style.width = "100px";
-        img.style.height = "auto";
-    
-        img.dataset.index = (i).toString();
-    
-        document.body.appendChild(img);
-        console.log(`Image loaded for ${point.imageName} with index ${img.dataset.index}`);
-      }
-    }
-    points = points.map(point => [point.coordinates[0], point.coordinates[1]]);
+    let points = await getPoints(center)
+    if (points.length === 0) return
+
+    // Fetch all images first
+    const imagePromises = points.map(point => getImage(point.imageName))
+    const imageUrls = await Promise.all(imagePromises)
+    imageUrlsRef.current = imageUrls.filter(url => url !== null)
+
+    points = points.map(point => [point.coordinates[0], point.coordinates[1]])
 
     const createPopup = (
       index: number,
@@ -203,6 +180,7 @@ function App() {
           coordinates={coords}
           routeGeometry={routeGeometry}
           startPoint={center}
+          imageUrl={imageUrlsRef.current[index]}
         />
       )
 
@@ -222,7 +200,6 @@ function App() {
       return popup
     }
 
-    // Get routes, add markers
     const routeData = await Promise.all(
       points.map(async (point, i) => {
         const route = await getRoute(center, point)
@@ -248,7 +225,7 @@ function App() {
     const bounds = points.reduce((b, p) => b.extend(p), new mapboxgl.LngLatBounds().extend(center))
     map.fitBounds(bounds, { padding: 50 })
 
-    const shortestIndex = routeData // Find shortest route
+    const shortestIndex = routeData
       .map((r, i) => ({ index: i, distance: r.distance }))
       .sort((a, b) => a.distance - b.distance)[0].index
 
@@ -273,7 +250,6 @@ function App() {
       }
     })
 
-    // Set up geocoder
     const geocoder = new MapboxGeocoder({
       accessToken: MAPBOX_TOKEN,
       mapboxgl,
@@ -316,10 +292,7 @@ function App() {
   }, [])
 
   return (
-    <div
-      ref={mapContainer}
-      style={{ position: "absolute", top: 0, bottom: 0, width: "100%" }}
-    />
+    <div ref={mapContainer} style={{ position: "absolute", top: 0, bottom: 0, width: "100%" }} />
   )
 }
 

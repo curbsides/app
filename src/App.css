@@ -89,3 +89,7 @@ body {
 .custom-popup .mapboxgl-popup-tip {
   display: none;
 }
+
+.popup-image-container img {
+  border-radius: 8px;
+}

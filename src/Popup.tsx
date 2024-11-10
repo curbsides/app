@@ -16,9 +16,17 @@ interface PopupProps {
   coordinates: [number, number]
   routeGeometry?: GeoJSON.LineString
   startPoint?: [number, number]
+  imageUrl?: string
 }
 
-const Popup: React.FC<PopupProps> = ({ pointNumber, popupNode, coordinates, routeGeometry, startPoint }) => {
+const Popup: React.FC<PopupProps> = ({
+  pointNumber,
+  popupNode,
+  coordinates,
+  routeGeometry,
+  startPoint,
+  imageUrl
+}) => {
   const miniMapContainer = useRef<HTMLDivElement>(null)
   const miniMapRef = useRef<mapboxgl.Map | null>(null)
   const initStarted = useRef(false)
@@ -65,25 +73,6 @@ const Popup: React.FC<PopupProps> = ({ pointNumber, popupNode, coordinates, rout
         }
       })
 
-      miniMapRef.current.on("mouseenter", "spot", () => {
-        console.log("hover");
-      
-        // Find the image with the matching data-index for the pointNumber
-        const img = document.querySelector(`img[data-index='${pointNumber}']`)  as HTMLImageElement;;
-      
-        if (img) {
-          img.style.display = "block"; // Show the image
-          console.log(`Image for point ${pointNumber} displayed`);
-        }
-      });
-      
-      miniMapRef.current.on("mouseleave", "spot", () => {
-        const img = document.querySelector(`img[data-index='${pointNumber}']`)  as HTMLImageElement;;
-        
-        if (img) {
-          img.style.display = "none"; // Hide the image
-        }
-      });
       // Add the route layer
       miniMapRef.current.addLayer({
         id: "route",
@@ -135,10 +124,23 @@ const Popup: React.FC<PopupProps> = ({ pointNumber, popupNode, coordinates, rout
   }, [coordinates, routeGeometry])
 
   return (
-    <div
-      ref={miniMapContainer}
-      style={{ width: "100%", height: "300px", margin: 0 }}
-    ></div>
+    <div className="popup-container">
+      <div ref={miniMapContainer} style={{ width: "100%", height: "300px", margin: 0 }} />
+      {imageUrl && (
+        <div className="popup-image-container">
+          <img
+            src={imageUrl}
+            alt={`Location ${pointNumber}`}
+            style={{
+              width: "100%",
+              height: "200px",
+              objectFit: "cover",
+              marginTop: "10px"
+            }}
+          />
+        </div>
+      )}
+    </div>
   )
 }
 
