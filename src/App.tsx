@@ -13,7 +13,7 @@ const MAPBOX_TOKEN =
   "pk.eyJ1IjoiYWN1bWFuZSIsImEiOiJjbTNhZmxodm8xMGNiMmtvcjNrcTVjYm5vIn0.urWNru_orWfcj6C1HAMQtA"
 const HERE_TEMP: [number, number] = [-122.4165, 37.7554]
 const ROUTE_COLOR = "#4169E1"
-const flyToDuration = 2000;
+const flyToDuration = 2000
 
 async function getRoute(start: [number, number], end: [number, number]) {
   const response = await fetch(
@@ -72,14 +72,14 @@ function App() {
   const currentMarkers = useRef<mapboxgl.Marker[]>([])
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const routesDataRef = useRef<Array<{ distance: number; geometry: GeoJSON.LineString }>>([])
-  const [selectedMarkerIndex, setSelectedMarkerIndex] = useState<number | null>(null)
+  const [selMarkerIndex, setSelMarkerIndex] = useState<number | null>(null)
 
   function clearSelection() {
     if (!mapRef.current || !routesDataRef.current.length) return
 
     // Close any open popups
     currentMarkers.current.forEach(marker => marker.getPopup().remove())
-    setSelectedMarkerIndex(null)
+    setSelMarkerIndex(null)
 
     // Reset all routes to unselected state
     ;(mapRef.current.getSource("routes") as mapboxgl.GeoJSONSource).setData({
@@ -100,7 +100,7 @@ function App() {
 
     // Close any open popups
     currentMarkers.current.forEach(marker => marker.getPopup().remove())
-    setSelectedMarkerIndex(index)
+    setSelMarkerIndex(index)
 
     // Update routes
     ;(mapRef.current.getSource("routes") as mapboxgl.GeoJSONSource).setData({
@@ -169,7 +169,7 @@ function App() {
         })
         .on("close", () => {
           popupNode.unloadMap?.()
-          if (selectedMarkerIndex === index) clearSelection()
+          if (selMarkerIndex === index) clearSelection()
         })
 
       return popup
@@ -198,16 +198,16 @@ function App() {
 
     routesDataRef.current = routeData
 
-    // Find shortest route
-    const shortestIndex = routeData
+    const bounds = points.reduce((b, p) => b.extend(p), new mapboxgl.LngLatBounds().extend(center))
+    map.fitBounds(bounds, { padding: 50 })
+
+    const shortestIndex = routeData // Find shortest route
       .map((r, i) => ({ index: i, distance: r.distance }))
       .sort((a, b) => a.distance - b.distance)[0].index
 
-    updateSelectedRoute(shortestIndex)
-
-    // Fit bounds
-    const bounds = points.reduce((b, p) => b.extend(p), new mapboxgl.LngLatBounds().extend(center))
-    map.fitBounds(bounds, { padding: 50 })
+    setTimeout(() => {
+      updateSelectedRoute(shortestIndex)
+    }, 100)
   }
 
   useEffect(() => {
@@ -239,29 +239,28 @@ function App() {
 
     map.addControl(geocoder, "top-left")
     map.on("load", () => updateMapPoints(map, HERE_TEMP))
-    let isFlying = false;
-    let startTime = Date.now();
-    map.on('moveend', () => {
+    let isFlying = false
+    let startTime = Date.now()
+    map.on("moveend", () => {
       if (startTime + flyToDuration < Date.now()) {
-        map.setMinZoom(14);
-        map.setMaxZoom(18);
-        mapContainer.current.style.pointerEvents = "auto";
+        map.setMinZoom(14)
+        map.setMaxZoom(18)
+        mapContainer.current.style.pointerEvents = "auto"
         isFlying = false
       }
-    });
+    })
+
     async function animateFly(event) {
-    
-        if (!isFlying) {
-          isFlying = true;
-          startTime = Date.now();
-          mapContainer.current.style.pointerEvents = "none";
-          const newCenter: [number, number] = [event.result.center[0], event.result.center[1]];
-          map.setMinZoom(null);
-          map.setMaxZoom(null);
-          await updateMapPoints(map, newCenter);
-          map.flyTo({ center: newCenter, zoom: 16, essential: true, duration: flyToDuration });
-         
-        }
+      if (!isFlying) {
+        isFlying = true
+        startTime = Date.now()
+        mapContainer.current.style.pointerEvents = "none"
+        const newCenter: [number, number] = [event.result.center[0], event.result.center[1]]
+        map.setMinZoom(null)
+        map.setMaxZoom(null)
+        await updateMapPoints(map, newCenter)
+        map.flyTo({ center: newCenter, zoom: 16, essential: true, duration: flyToDuration })
+      }
     }
 
     return () => {

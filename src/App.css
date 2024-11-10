@@ -11,11 +11,12 @@ body {
 }
 
 .marker {
-  width: 64px; 
-  border-radius: 50%;
+  width: 85px;
+  height: 85px;
   cursor: pointer;
+  border-radius: 50%;
+  background-color: transparent;
   display: block;
-  border: 0.5em solid transparent; 
   box-shadow: 0 0 0 0.5em rgba(0, 0, 0, 0);
 }
 

@@ -21,12 +21,15 @@ interface PopupProps {
 const Popup: React.FC<PopupProps> = ({ popupNode, coordinates, routeGeometry, startPoint }) => {
   const miniMapContainer = useRef<HTMLDivElement>(null)
   const miniMapRef = useRef<mapboxgl.Map | null>(null)
+  const initStarted = useRef(false)
 
   const loadMap = () => {
-    if (!miniMapContainer.current || miniMapRef.current) return
+    if (!miniMapContainer.current || miniMapRef.current || initStarted.current) return
+
+    initStarted.current = true
 
     mapboxgl.accessToken = MAPBOX_TOKEN
-    miniMapRef.current = new mapboxgl.Map({
+    const map = new mapboxgl.Map({
       container: miniMapContainer.current,
       style: "mapbox://styles/mapbox/standard",
       center: coordinates,
@@ -37,7 +40,9 @@ const Popup: React.FC<PopupProps> = ({ popupNode, coordinates, routeGeometry, st
       collectResourceTiming: false
     })
 
-    miniMapRef.current.on("load", () => {
+    miniMapRef.current = map
+
+    map.on("load", () => {
       if (!miniMapRef.current) return
 
       miniMapRef.current.addLayer({
@@ -94,11 +99,14 @@ const Popup: React.FC<PopupProps> = ({ popupNode, coordinates, routeGeometry, st
       miniMapRef.current.remove()
       miniMapRef.current = null
     }
+    initStarted.current = false
   }
 
   useEffect(() => {
     popupNode.loadMap = loadMap
     popupNode.unloadMap = unloadMap
+
+    loadMap()
 
     return () => {
       unloadMap()
